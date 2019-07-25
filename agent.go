@@ -5,6 +5,7 @@ package ice
 import (
 	"context"
 	"fmt"
+	"log"
 	"math/rand"
 	"net"
 	"strings"
@@ -793,7 +794,9 @@ func (a *Agent) Close() error {
 		return err
 	}
 
+	log.Printf("agent closing")
 	<-done
+	log.Printf("agent closed")
 	a.updateConnectionState(ConnectionStateClosed)
 
 	return nil
