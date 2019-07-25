@@ -478,6 +478,9 @@ func (a *Agent) updateConnectionState(newState ConnectionState) {
 			// and the handler may also require it
 			go hdlr(newState)
 		}
+		if newState == ConnectionStateClosed {
+			a.onConnectionStateChangeHdlr = nil
+		}
 	}
 }
 
@@ -798,6 +801,10 @@ func (a *Agent) Close() error {
 	<-done
 	log.Printf("agent closed")
 	a.updateConnectionState(ConnectionStateClosed)
+
+	a.onSelectedCandidatePairChangeHdlr = nil
+	a.onCandidateHdlr = nil
+	a.onSelectedCandidatePairChangeHdlr = nil
 
 	return nil
 }
