@@ -6,10 +6,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"math/rand"
 	"net"
-	"runtime"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -461,11 +459,6 @@ func (a *Agent) startConnectivityChecks(isControlling bool, remoteUfrag, remoteP
 		} else {
 			a.selector = &controlledSelector{agent: a, log: a.log}
 		}
-		log.Printf("+++++ agent.selector")
-		runtime.SetFinalizer(a.selector, func(interface{}) {
-			log.Printf("----- agent.selector finalized")
-		})
-
 		a.selector.Start()
 
 		agent.updateConnectionState(ConnectionStateChecking)
@@ -594,8 +587,6 @@ func (a *Agent) run(t task) error {
 }
 
 func (a *Agent) taskLoop() {
-	defer log.Print("agent: taskloop end")
-	log.Print("agent: taskloop start")
 	for {
 		if a.selector != nil {
 			select {
@@ -815,9 +806,7 @@ func (a *Agent) Close() error {
 		return err
 	}
 
-	log.Printf("agent closing")
 	<-done
-	log.Printf("agent closed")
 	a.updateConnectionState(ConnectionStateClosed)
 
 	a.onSelectedCandidatePairChangeHdlr = nil
