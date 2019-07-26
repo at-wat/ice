@@ -594,18 +594,26 @@ func (a *Agent) taskLoop() {
 				a.selector.ContactCandidates()
 			case <-a.connectivityChan:
 				a.selector.ContactCandidates()
-			case t := <-a.taskChan:
-				// Run the task
-				t(a)
+			case t, ok := <-a.taskChan:
+				if ok {
+					// Run the task
+					t(a)
+				} else {
+					return
+				}
 
 			case <-a.done:
 				return
 			}
 		} else {
 			select {
-			case t := <-a.taskChan:
-				// Run the task
-				t(a)
+			case t, ok := <-a.taskChan:
+				if ok {
+					// Run the task
+					t(a)
+				} else {
+					return
+				}
 
 			case <-a.done:
 				return
