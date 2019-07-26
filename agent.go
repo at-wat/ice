@@ -770,9 +770,6 @@ func (a *Agent) GetLocalUserCredentials() (frag string, pwd string) {
 
 // Close cleans up the Agent
 func (a *Agent) Close() error {
-	if a == nil {
-		return nil
-	}
 	done := make(chan struct{})
 	err := a.run(func(agent *Agent) {
 		defer func() {
