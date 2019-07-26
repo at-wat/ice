@@ -27,7 +27,12 @@ type controllingSelector struct {
 func (s *controllingSelector) Start() {
 	s.startTime = time.Now()
 	go func() {
-		time.Sleep(s.agent.candidateSelectionTimeout)
+		select {
+		case <-time.After(s.agent.candidateSelectionTimeout):
+		case <-s.agent.done:
+			// Must return immediately to unref agent quickly
+			return
+		}
 		err := s.agent.run(func(a *Agent) {
 			if s.nominatedPair == nil {
 				p := s.agent.getBestValidCandidatePair()
