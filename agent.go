@@ -9,6 +9,7 @@ import (
 	"log"
 	"math/rand"
 	"net"
+	"runtime"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -460,6 +461,10 @@ func (a *Agent) startConnectivityChecks(isControlling bool, remoteUfrag, remoteP
 		} else {
 			a.selector = &controlledSelector{agent: a, log: a.log}
 		}
+		log.Printf("+++++ agent.selector")
+		runtime.SetFinalizer(a.selector, func(interface{}) {
+			log.Printf("----- agent.selector finalized")
+		})
 
 		a.selector.Start()
 
