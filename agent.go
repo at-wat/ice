@@ -4,6 +4,7 @@ package ice
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"math/rand"
@@ -150,6 +151,9 @@ type Agent struct {
 }
 
 func (a *Agent) ok() error {
+	if a == nil {
+		return errors.New("agent is closed")
+	}
 	select {
 	case <-a.done:
 		return a.getErr()

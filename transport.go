@@ -88,6 +88,7 @@ func (c *Conn) Write(p []byte) (int, error) {
 // Close implements the Conn Close method. It is used to close
 // the connection. Any calls to Read and Write will be unblocked and return an error.
 func (c *Conn) Close() error {
+	defer func() { c.agent = nil }()
 	return c.agent.Close()
 }
 
