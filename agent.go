@@ -823,6 +823,9 @@ func (a *Agent) Close() error {
 	a.onSelectedCandidatePairChangeHdlr = nil
 	a.onCandidateHdlr = nil
 
+	// Task may have reference to the agent.
+	close(a.taskChan)
+
 	return nil
 }
 
