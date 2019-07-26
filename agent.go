@@ -791,6 +791,8 @@ func (a *Agent) Close() error {
 		// Unref them to break circular references.
 		agent.selectedPair = nil
 		agent.checklist = nil
+		// agent.selector has reference to agent.
+		agent.selector = nil
 
 		if err := a.buffer.Close(); err != nil {
 			a.log.Warnf("failed to close buffer: %v", err)
