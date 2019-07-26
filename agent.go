@@ -594,6 +594,8 @@ func (a *Agent) run(t task) error {
 }
 
 func (a *Agent) taskLoop() {
+	defer log.Print("agent: taskloop end")
+	log.Print("agent: taskloop start")
 	for {
 		if a.selector != nil {
 			select {
