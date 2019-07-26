@@ -150,6 +150,8 @@ func (c *candidateBase) close() error {
 		if err != nil {
 			return err
 		}
+		// Remove reference to the agent
+		c.currAgent = nil
 
 		// Wait until the recvLoop is closed
 		<-c.closedCh
