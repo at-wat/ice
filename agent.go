@@ -787,6 +787,11 @@ func (a *Agent) Close() error {
 			}
 			delete(agent.remoteCandidates, net)
 		}
+		// Stored candidatePairs have reference to the agent.
+		// Unref them to break circular references.
+		agent.selectedPair = nil
+		agent.checklist = nil
+
 		if err := a.buffer.Close(); err != nil {
 			a.log.Warnf("failed to close buffer: %v", err)
 		}
@@ -804,7 +809,6 @@ func (a *Agent) Close() error {
 
 	a.onSelectedCandidatePairChangeHdlr = nil
 	a.onCandidateHdlr = nil
-	a.onSelectedCandidatePairChangeHdlr = nil
 
 	return nil
 }
