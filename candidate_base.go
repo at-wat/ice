@@ -132,10 +132,14 @@ func handleInboundCandidateMsg(c Candidate, buffer []byte, srcAddr net.Addr, log
 	}
 
 	// NOTE This will return packetio.ErrFull if the buffer ever manages to fill up.
-	if _, err := c.agent().buffer.Write(buffer); err != nil {
-		log.Warnf("failed to write packet")
+	err = c.agent().run(func(agent *Agent) {
+		if _, err := c.agent().buffer.Write(buffer); err != nil {
+			log.Warnf("failed to write packet")
+		}
+	})
+	if err != nil {
+		log.Warnf("Failed to handle message: %v", err)
 	}
-
 }
 
 // close stops the recvLoop
