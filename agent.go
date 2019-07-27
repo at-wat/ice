@@ -5,7 +5,6 @@ package ice
 import (
 	"context"
 	"fmt"
-	"log"
 	"math/rand"
 	"net"
 	"strings"
@@ -766,7 +765,6 @@ func (a *Agent) GetLocalUserCredentials() (frag string, pwd string) {
 
 // Close cleans up the Agent
 func (a *Agent) Close() error {
-	log.Print("Agent.Close")
 	done := make(chan struct{})
 	err := a.run(func(agent *Agent) {
 		defer func() {
