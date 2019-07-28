@@ -799,6 +799,9 @@ func (a *Agent) Close() error {
 		// agent.selector has reference to agent.
 		agent.selector = nil
 
+		a.onSelectedCandidatePairChangeHdlr = nil
+		a.onCandidateHdlr = nil
+
 		if err := a.buffer.Close(); err != nil {
 			a.log.Warnf("failed to close buffer: %v", err)
 		}
@@ -808,6 +811,9 @@ func (a *Agent) Close() error {
 		}
 
 		a.closeMulticastConn()
+
+		// Task may have reference to the agent.
+		close(a.taskChan)
 	})
 	if err != nil {
 		return err
@@ -815,12 +821,6 @@ func (a *Agent) Close() error {
 
 	<-done
 	a.updateConnectionState(ConnectionStateClosed)
-
-	a.onSelectedCandidatePairChangeHdlr = nil
-	a.onCandidateHdlr = nil
-
-	// Task may have reference to the agent.
-	close(a.taskChan)
 
 	return nil
 }
