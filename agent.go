@@ -79,8 +79,8 @@ type Agent struct {
 	onConnected     chan struct{}
 	onConnectedOnce sync.Once
 
-	connectivityChan <-chan time.Time
-	// force candidate to be contacted immediately (instead of waiting for connectivityChan)
+	connectivityTicker *time.Ticker
+	// force candidate to be contacted immediately (instead of waiting for connectivityTicker)
 	forceCandidateContact chan bool
 
 	trickle         bool
@@ -455,15 +455,13 @@ func (a *Agent) startConnectivityChecks(isControlling bool, remoteUfrag, remoteP
 		} else {
 			a.selector = &controlledSelector{agent: a, log: a.log}
 		}
-
 		a.selector.Start()
 
 		agent.updateConnectionState(ConnectionStateChecking)
 
 		// TODO this should be dynamic, and grow when the connection is stable
 		agent.forceCandidateContact <- true
-		t := time.NewTicker(a.taskLoopInterval)
-		agent.connectivityChan = t.C
+		agent.connectivityTicker = time.NewTicker(a.taskLoopInterval)
 	})
 }
 
@@ -586,7 +584,7 @@ func (a *Agent) taskLoop() {
 			select {
 			case <-a.forceCandidateContact:
 				a.selector.ContactCandidates()
-			case <-a.connectivityChan:
+			case <-a.connectivityTicker.C:
 				a.selector.ContactCandidates()
 			case t := <-a.taskChan:
 				// Run the task
@@ -785,6 +783,10 @@ func (a *Agent) Close() error {
 		}
 		if err := a.buffer.Close(); err != nil {
 			a.log.Warnf("failed to close buffer: %v", err)
+		}
+
+		if a.connectivityTicker != nil {
+			a.connectivityTicker.Stop()
 		}
 
 		a.closeMulticastConn()
