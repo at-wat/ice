@@ -3,6 +3,7 @@ package ice
 import (
 	"context"
 	"net"
+	"runtime"
 	"sync"
 	"testing"
 	"time"
@@ -208,8 +209,29 @@ func runAgentTest(t *testing.T, config *AgentConfig, task func(a *Agent)) {
 		t.Fatalf("Error constructing ice.Agent")
 	}
 
+	finalized := make(chan struct{})
+	runtime.SetFinalizer(a, func(interface{}) {
+		close(finalized)
+	})
+	defer func() {
+		for i := 0; i < 5; i++ {
+			runtime.GC()
+			select {
+			case <-finalized:
+				return
+			case <-time.After(50 * time.Millisecond):
+			}
+		}
+		t.Errorf("Agent leaked")
+	}()
+
 	if err := a.run(task); err != nil {
 		t.Fatalf("Agent run failure: %v", err)
+	}
+	if a.ok() == nil {
+		if err := a.Close(); err != nil {
+			t.Fatalf("Close agent emits error %v", err)
+		}
 	}
 }
 
@@ -275,11 +297,6 @@ func TestHandlePeerReflexive(t *testing.T) {
 			if c.Port() != 999 {
 				t.Fatal("Port number mismatch")
 			}
-
-			err = a.Close()
-			if err != nil {
-				t.Fatalf("Close agent emits error %v", err)
-			}
 		})
 	})
 
@@ -305,11 +322,6 @@ func TestHandlePeerReflexive(t *testing.T) {
 
 			if len(a.remoteCandidates) != 0 {
 				t.Fatal("bad address should not be added to the remote candidate list")
-			}
-
-			err = a.Close()
-			if err != nil {
-				t.Fatalf("Close agent emits error %v", err)
 			}
 		})
 	})

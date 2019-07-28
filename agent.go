@@ -476,6 +476,10 @@ func (a *Agent) updateConnectionState(newState ConnectionState) {
 			// Call handler async since we may be holding the agent lock
 			// and the handler may also require it
 			go hdlr(newState)
+			// Clear handler to break possible circular references
+			if newState == ConnectionStateClosed {
+				a.onConnectionStateChangeHdlr = nil
+			}
 		}
 	}
 }
@@ -588,18 +592,26 @@ func (a *Agent) taskLoop() {
 				a.selector.ContactCandidates()
 			case <-a.connectivityChan:
 				a.selector.ContactCandidates()
-			case t := <-a.taskChan:
-				// Run the task
-				t(a)
+			case t, ok := <-a.taskChan:
+				if ok {
+					// Run the task
+					t(a)
+				} else {
+					return
+				}
 
 			case <-a.done:
 				return
 			}
 		} else {
 			select {
-			case t := <-a.taskChan:
-				// Run the task
-				t(a)
+			case t, ok := <-a.taskChan:
+				if ok {
+					// Run the task
+					t(a)
+				} else {
+					return
+				}
 
 			case <-a.done:
 				return
@@ -783,11 +795,25 @@ func (a *Agent) Close() error {
 			}
 			delete(agent.remoteCandidates, net)
 		}
+		// Stored candidatePairs have reference to the agent.
+		// Unref them to break circular references.
+		agent.selectedPair = nil
+		agent.checklist = nil
+		// agent.selector has reference to agent.
+		agent.selector = nil
+
+		agent.onSelectedCandidatePairChangeHdlr = nil
+		agent.onCandidateHdlr = nil
+		// agent.onConnectionStateChangeHdlr will be unref-ed after receiving ConnectionStateClosed.
+
 		if err := a.buffer.Close(); err != nil {
 			a.log.Warnf("failed to close buffer: %v", err)
 		}
 
 		a.closeMulticastConn()
+
+		// Task may have reference to the agent.
+		close(agent.taskChan)
 	})
 	if err != nil {
 		return err
