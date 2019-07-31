@@ -149,7 +149,10 @@ func (a *Agent) gatherCandidates() {
 
 	if err := a.run(func(agent *Agent) {
 		if a.onCandidateHdlr != nil {
-			go a.onCandidateHdlr(nil)
+			hdlr := a.onCandidateHdlr
+			go hdlr(nil)
+			// Clear handler to break possible circular references
+			a.onCandidateHdlr = nil
 		}
 	}); err != nil {
 		a.log.Warnf("Failed to run onCandidateHdlr task: %v\n", err)

@@ -474,9 +474,10 @@ func (a *Agent) updateConnectionState(newState ConnectionState) {
 			// Call handler async since we may be holding the agent lock
 			// and the handler may also require it
 			go hdlr(newState)
-		}
-		if newState == ConnectionStateClosed {
-			a.onConnectionStateChangeHdlr = nil
+			// Clear handler to break possible circular references
+			if newState == ConnectionStateClosed {
+				a.onConnectionStateChangeHdlr = nil
+			}
 		}
 	}
 }
