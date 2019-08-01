@@ -1,4 +1,4 @@
-module github.com/pion/ice
+module github.com/at-wat/ice
 
 go 1.12
 
